@@ -159,6 +159,24 @@ function AppContent() {
 
   const saveIncident = async (status: "pending" | "resolved") => {
     if (!result || !user) return;
+    
+    // Si ya tiene ID, significa que ya está guardado en la DB
+    if (result.id && !isNewTriage) {
+      setError("Esta incidencia ya está guardada en el sistema.");
+      return;
+    }
+
+    // Evitar duplicados basados en Order ID (si no es FALTANTE)
+    // No permitimos guardar un pedido si ya existe como pendiente O resuelto
+    if (result.orderId !== "FALTANTE") {
+      const existingIncident = incidents.find(inc => inc.orderId === result.orderId);
+      
+      if (existingIncident) {
+        setError(`El pedido ${result.orderId} ya está registrado como ${existingIncident.status === "pending" ? "PENDIENTE" : "RESUELTO"}.`);
+        return;
+      }
+    }
+
     try {
       const docRef = await addDoc(collection(db, "incidents"), {
         ...result,
@@ -315,6 +333,7 @@ function AppContent() {
                       key={inc.id}
                       onClick={() => {
                         setResult(inc);
+                        setIsNewTriage(false);
                         setInput(inc.emailText || "");
                       }}
                       className={cn(

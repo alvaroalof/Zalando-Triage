@@ -1,0 +1,6 @@
+{
+  "name": "Zalando Triage Agent",
+  "description": "Intelligent triage agent for processing customer emails into structured data using Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

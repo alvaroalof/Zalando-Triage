@@ -1,0 +1,57 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: incidents
+// Fields:
+//   - orderId: string (required)
+//   - category: string (required, enum: Devolución, Cambio de Talla, Entrega Fallida, Facturación)
+//   - sentiment: string (required, enum: Calmado, Frustrado, Urgente)
+//   - requiresHumanIntervention: bool (required)
+//   - summary: string (required)
+//   - emailText: string (required)
+//   - status: string (required, enum: pending, resolved)
+//   - createdAt: timestamp (required)
+//   - resolvedAt: timestamp (optional)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    function isValidIncident(data) {
+      return data.keys().hasAll(['orderId', 'category', 'sentiment', 'requiresHumanIntervention', 'summary', 'emailText', 'status', 'createdAt']) &&
+             data.orderId is string && data.orderId.size() < 50 &&
+             data.category in ['Devolución', 'Cambio de Talla', 'Entrega Fallida', 'Facturación'] &&
+             data.sentiment in ['Calmado', 'Frustrado', 'Urgente'] &&
+             data.requiresHumanIntervention is bool &&
+             data.summary is string && data.summary.size() < 2000 &&
+             data.emailText is string && data.emailText.size() < 5000 &&
+             data.status in ['pending', 'resolved'] &&
+             data.createdAt is timestamp;
+    }
+
+    match /incidents/{incidentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidIncident(request.resource.data);
+      allow update: if isAuthenticated() && isValidIncident(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

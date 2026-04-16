@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "Incident": {
+      "title": "Incident",
+      "description": "A customer support incident processed by the triage agent.",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "category": { "type": "string", "enum": ["Devolución", "Cambio de Talla", "Entrega Fallida", "Facturación"] },
+        "sentiment": { "type": "string", "enum": ["Calmado", "Frustrado", "Urgente"] },
+        "requiresHumanIntervention": { "type": "boolean" },
+        "summary": { "type": "string" },
+        "emailText": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "resolvedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "category", "sentiment", "requiresHumanIntervention", "summary", "emailText", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/incidents/{incidentId}": {
+      "schema": "Incident",
+      "description": "Collection of customer incidents."
+    }
+  }
+}
